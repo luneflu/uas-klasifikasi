@@ -23,6 +23,9 @@ export default defineConfig({
 				precompress: false,
 				strict: true
 			}),
+			paths: {
+				base: process.env.BASE_PATH ?? ''
+			},
 			alias: {
 				$lib: './src/lib',
 				'$lib/*': './src/lib/*'

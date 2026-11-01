@@ -11,6 +11,7 @@ import {
 	stratifiedSplit,
 	ALL_CLASSES
 } from '$lib/data/dataset';
+import { asset } from '$app/paths';
 import { NaiveBayesClassifier } from '$lib/ml/naive-bayes';
 import { KNNClassifier } from '$lib/ml/knn';
 import { calculateMetrics } from '$lib/ml/metrics';
@@ -89,7 +90,7 @@ class AppState {
 
 	async loadFullDataset(): Promise<boolean> {
 		try {
-			const res = await fetch('/data/gaming_engagement.csv');
+			const res = await fetch(asset('/data/gaming_engagement.csv'));
 			if (!res.ok) return false;
 			const text = await res.text();
 			return this.loadCustomData(text);
