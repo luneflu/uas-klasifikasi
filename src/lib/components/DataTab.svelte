@@ -55,6 +55,24 @@
 		URL.revokeObjectURL(url);
 	}
 
+	let isLoadingFull = $state<boolean>(false);
+
+	async function loadFull() {
+		isLoadingFull = true;
+		uploadMessage = 'Mengunduh dan memproses 40.000 data CSV...';
+		uploadError = false;
+		const ok = await appState.loadFullDataset();
+		isLoadingFull = false;
+		if (ok) {
+			uploadMessage = `Berhasil memuat dataset lengkap: ${appState.totalRows} baris!`;
+			currentPage = 1;
+		} else {
+			uploadMessage = 'Gagal memuat dataset lengkap dari file static.';
+			uploadError = true;
+		}
+		setTimeout(() => (uploadMessage = null), 4000);
+	}
+
 	function resetData() {
 		appState.resetDefaultData();
 		currentPage = 1;
@@ -122,11 +140,21 @@
 				</Card.Title>
 			</Card.Header>
 			<Card.Content>
-				<label class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 cursor-pointer font-medium">
-					<UploadIcon class="size-3" />
-					<span>Upload CSV Baru</span>
-					<input type="file" accept=".csv" onchange={handleFileUpload} class="hidden" />
-				</label>
+				<div class="flex items-center justify-between pt-1">
+					<label class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 cursor-pointer font-medium">
+						<UploadIcon class="size-3" />
+						<span>Upload CSV</span>
+						<input type="file" accept=".csv" onchange={handleFileUpload} class="hidden" />
+					</label>
+					<button
+						type="button"
+						disabled={isLoadingFull}
+						onclick={loadFull}
+						class="text-[11px] text-muted-foreground hover:text-foreground underline cursor-pointer disabled:opacity-50"
+					>
+						{isLoadingFull ? 'Memuat 40k...' : 'Muat 40k Data Asli'}
+					</button>
+				</div>
 			</Card.Content>
 		</Card.Root>
 	</div>

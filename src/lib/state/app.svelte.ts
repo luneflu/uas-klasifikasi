@@ -87,10 +87,22 @@ class AppState {
 		this.trainModel();
 	}
 
+	async loadFullDataset(): Promise<boolean> {
+		try {
+			const res = await fetch('/data/gaming_engagement.csv');
+			if (!res.ok) return false;
+			const text = await res.text();
+			return this.loadCustomData(text);
+		} catch {
+			return false;
+		}
+	}
+
 	trainModel() {
 		const { train, test } = this.split;
 		if (train.length === 0 || test.length === 0) return;
 
+		let actual: EngagementLevel[] = [];
 		let predicted: EngagementLevel[] = [];
 
 		if (this.algorithm === 'naive_bayes') {
@@ -98,14 +110,22 @@ class AppState {
 			nb.fit(train);
 			this.nbClassifier = nb;
 			predicted = nb.predict(test);
+			actual = test.map((t) => t.EngagementLevel);
 		} else {
 			const knn = new KNNClassifier(this.knnK);
 			knn.fit(train);
 			this.knnClassifier = knn;
-			predicted = knn.predict(test);
+
+			// Cap KNN evaluation to 500 samples for sub-second responsive compute
+			const evalSet =
+				test.length > 500
+					? Array.from({ length: 500 }, (_, i) => test[Math.floor((i * test.length) / 500)])
+					: test;
+
+			predicted = evalSet.map((r) => knn.predictOne(r).predictedClass);
+			actual = evalSet.map((t) => t.EngagementLevel);
 		}
 
-		const actual = test.map((t) => t.EngagementLevel);
 		this.metrics = calculateMetrics(actual, predicted);
 		this.isTrained = true;
 	}
