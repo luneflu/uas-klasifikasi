@@ -11,6 +11,21 @@
 	import CalculatorIcon from '@lucide/svelte/icons/calculator';
 	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 	import BookOpenIcon from '@lucide/svelte/icons/book-open';
+	import CheckCircle2Icon from '@lucide/svelte/icons/check-circle-2';
+	import XCircleIcon from '@lucide/svelte/icons/x-circle';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import ListOrderedIcon from '@lucide/svelte/icons/list-ordered';
+
+	// Pagination for test predictions table
+	let testPage = $state(1);
+	const testPageSize = 10;
+	const totalTestPages = $derived(
+		Math.max(1, Math.ceil(appState.testPredictions.length / testPageSize))
+	);
+	const paginatedTestPredictions = $derived(
+		appState.testPredictions.slice((testPage - 1) * testPageSize, testPage * testPageSize)
+	);
 
 	// Simulation form state
 	let simForm = $state({
@@ -456,6 +471,109 @@
 						</div>
 					{/if}
 				</div>
+			</Card.Content>
+		</Card.Root>
+
+		<!-- 5. Tabel Hasil Data Uji vs Prediksi -->
+		<Card.Root>
+			<Card.Header class="flex flex-row items-center justify-between pb-3">
+				<div>
+					<div class="flex items-center gap-2">
+						<ListOrderedIcon class="size-4 text-indigo-600 dark:text-indigo-400" />
+						<Card.Title class="text-base">Tabel Data Uji vs Hasil Prediksi</Card.Title>
+					</div>
+					<Card.Description>
+						Menampilkan baris {(testPage - 1) * testPageSize + 1} &ndash; {Math.min(
+							testPage * testPageSize,
+							appState.testPredictions.length
+						)} dari {appState.testPredictions.length} data uji yang dievaluasi
+					</Card.Description>
+				</div>
+
+				<!-- Pagination Controls -->
+				<div class="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={testPage <= 1}
+						onclick={() => (testPage = Math.max(1, testPage - 1))}
+						class="h-8 size-8 p-0"
+					>
+						<ChevronLeftIcon class="size-4" />
+					</Button>
+					<span class="text-xs text-muted-foreground font-medium">
+						{testPage} / {totalTestPages}
+					</span>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={testPage >= totalTestPages}
+						onclick={() => (testPage = Math.min(totalTestPages, testPage + 1))}
+						class="h-8 size-8 p-0"
+					>
+						<ChevronRightIcon class="size-4" />
+					</Button>
+				</div>
+			</Card.Header>
+
+			<Card.Content class="p-0 overflow-x-auto">
+				<Table.Root class="text-xs">
+					<Table.Header class="bg-muted/50 border-y">
+						<Table.Row>
+							<Table.Head class="font-bold">Player ID</Table.Head>
+							<Table.Head class="font-bold">PlayTime</Table.Head>
+							<Table.Head class="font-bold">Sesi/Mgg</Table.Head>
+							<Table.Head class="font-bold">Durasi</Table.Head>
+							<Table.Head class="font-bold">Level</Table.Head>
+							<Table.Head class="font-bold">Genre</Table.Head>
+							<Table.Head class="font-bold">Kelas Aktual</Table.Head>
+							<Table.Head class="font-bold">Hasil Prediksi</Table.Head>
+							<Table.Head class="font-bold text-center">Status</Table.Head>
+						</Table.Row>
+					</Table.Header>
+					<Table.Body>
+						{#each paginatedTestPredictions as item}
+							<Table.Row class="hover:bg-muted/40 transition-colors">
+								<Table.Cell class="font-mono text-muted-foreground">{item.record.PlayerID}</Table.Cell>
+								<Table.Cell>{item.record.PlayTimeHours}h</Table.Cell>
+								<Table.Cell>{item.record.SessionsPerWeek}</Table.Cell>
+								<Table.Cell>{item.record.AvgSessionDurationMinutes}m</Table.Cell>
+								<Table.Cell>{item.record.PlayerLevel}</Table.Cell>
+								<Table.Cell>{item.record.GameGenre}</Table.Cell>
+								<Table.Cell>
+									<Badge variant="outline" class="font-medium">
+										{item.actual}
+									</Badge>
+								</Table.Cell>
+								<Table.Cell>
+									<Badge
+										variant="outline"
+										class={item.predicted === 'High'
+											? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+											: item.predicted === 'Medium'
+												? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+												: 'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'}
+									>
+										{item.predicted}
+									</Badge>
+								</Table.Cell>
+								<Table.Cell class="text-center">
+									{#if item.isCorrect}
+										<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+											<CheckCircle2Icon class="size-3" />
+											Benar
+										</span>
+									{:else}
+										<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+											<XCircleIcon class="size-3" />
+											Salah
+										</span>
+									{/if}
+								</Table.Cell>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			</Card.Content>
 		</Card.Root>
 	{/if}

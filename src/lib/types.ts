@@ -80,3 +80,10 @@ export interface SplitData {
 	train: PlayerRecord[];
 	test: PlayerRecord[];
 }
+
+export interface TestPredictionItem {
+	record: PlayerRecord;
+	actual: EngagementLevel;
+	predicted: EngagementLevel;
+	isCorrect: boolean;
+}

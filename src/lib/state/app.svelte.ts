@@ -3,7 +3,8 @@ import type {
 	EngagementLevel,
 	EvaluationMetrics,
 	SplitData,
-	PredictionResult
+	PredictionResult,
+	TestPredictionItem
 } from '$lib/types';
 import {
 	generateDefaultDataset,
@@ -28,6 +29,7 @@ class AppState {
 	knnClassifier = $state<KNNClassifier>(new KNNClassifier(5));
 
 	metrics = $state<EvaluationMetrics | null>(null);
+	testPredictions = $state<TestPredictionItem[]>([]);
 	isTrained = $state<boolean>(false);
 
 	constructor() {
@@ -105,6 +107,7 @@ class AppState {
 
 		let actual: EngagementLevel[] = [];
 		let predicted: EngagementLevel[] = [];
+		let evaluatedRecords: PlayerRecord[] = [];
 
 		if (this.algorithm === 'naive_bayes') {
 			const nb = new NaiveBayesClassifier();
@@ -112,6 +115,7 @@ class AppState {
 			this.nbClassifier = nb;
 			predicted = nb.predict(test);
 			actual = test.map((t) => t.EngagementLevel);
+			evaluatedRecords = test;
 		} else {
 			const knn = new KNNClassifier(this.knnK);
 			knn.fit(train);
@@ -125,7 +129,15 @@ class AppState {
 
 			predicted = evalSet.map((r) => knn.predictOne(r).predictedClass);
 			actual = evalSet.map((t) => t.EngagementLevel);
+			evaluatedRecords = evalSet;
 		}
+
+		this.testPredictions = evaluatedRecords.map((rec, i) => ({
+			record: rec,
+			actual: actual[i],
+			predicted: predicted[i],
+			isCorrect: actual[i] === predicted[i]
+		}));
 
 		this.metrics = calculateMetrics(actual, predicted);
 		this.isTrained = true;
